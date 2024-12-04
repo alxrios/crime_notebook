@@ -1,0 +1,228 @@
+---
+title: "**CRIME DATA ANALYSIS**"
+output: html_document
+---
+
+### **MAIN OBJECTIVE**
+
+The objective of this notebook is to explore the crime dataset found in kaggle at: <https://www.kaggle.com/datasets/haseefalam/crime-dataset/data?select=Crime_Data_from_2020_to_Present.csv>.
+
+### **NECESSARY LIBRARIES**
+
+Those are the libraries that are going to be used across this notebook.
+
+```{r}
+library(ggplot2)
+library(lubridate)
+```
+
+### **DATA LOAD**
+
+```{r}
+setwd("C://Users//riosa//documents//datasets//crime_dataset") # sets the directory to the specified path
+crimeset <- read.csv("Crime_Data_from_2020_to_Present.csv") # loads the dataset
+```
+
+### **EXPLORATORY DATA ANALYSIS**
+
+```{r}
+dim(crimeset)
+```
+The dataset counts with 955339 observations and 28 variables.
+Let's check the variable names.
+```{r}
+names(crimeset)
+```
+There are missing values in some variable?
+```{r}
+missing_table <- as.matrix(colSums(apply(X = crimeset, MARGIN = 2, FUN = is.na)))
+missing_table
+```
+The percentages of missing values in the different variables are:
+```{r}
+for (i in 1:dim(missing_table)[1]) {
+  if (missing_table[i, 1] != 0) {
+    cat("Percentage of missings of variable ", names(missing_table[i, ]), ":", round(100*missing_table[i, 1]/955339, 2), "%\n")
+  }
+}
+```
+Variables Crm.Cd.2, Crm.Cd.3 and Crm.Cd.4 have more than a 90 % of missing values, so they are hardly useful for modelling.
+
+Let's explore now the contents of each variable:
+
+#### **1) Variable DR_NO:**
+
+```{r}
+head(crimeset$DR_NO)
+length(unique(crimeset$DR_NO))
+length(unique(crimeset$DR_NO)) == dim(crimeset)[1]
+```
+This variable contains a unique identifier for each observation, so this variable will not be useful for modelling.
+
+#### **2) Variable Date.Rptd:**
+
+```{r}
+head(crimeset$Date.Rptd)
+```
+This variable contains dates and times. The first thing we will do is to check how many different hours the variable takes.
+```{r}
+# Let's see how to proceed for one case...
+paste(unlist(strsplit(crimeset$Date.Rptd[1], " "))[2:3], collapse = " ")
+
+# Let's create an auxiliar funciton to perform the above task
+getHour <- function(value) {
+  # Input a character string like "03/01/2020 12:00:00 AM"
+  # Return a character string like "12:00:00 AM"
+  # Input is assumed to be passed correctly by the user
+  return(paste(unlist(strsplit(value, " "))[2:3], collapse = " "))
+}
+
+# Testing...
+getHour(crimeset$Date.Rptd[1])
+getHour(crimeset$Date.Rptd[2])
+getHour(crimeset$Date.Rptd[3])
+
+# Let's store all the hours in a vector
+checkHours <- vapply(crimeset$Date.Rptd, getHour, character(1))
+# Vector obtained
+head(checkHours)
+# Let's check how many different values it takes...
+length(unique(checkHours))
+```
+There is only one hour that repeats across all the rows for this variable, 12:00:00 AM, so let's remove them and only remain with the date. For doing this, let's add a new variable to the dataset.
+```{r}
+# Let's create an auxiliar function to do the process...
+getDate <- function(value) {
+  # Input: a character string with the format: "03/01/2020 12:00:00 AM"
+  # Return: a character type with the format: "03/01/2020"
+  # Input is assumed to be correctly passed by the user
+  return(unlist(strsplit(value, " "))[1])
+}
+
+# Now let's create a new variable withe the dates in the dataset crimeset
+crimeset$rptd_date <-  vapply(crimeset$Date.Rptd, getDate, character(1))
+crimeset$rptd_date <- as.Date(crimeset$rptd_date, format = "%m/%d/%Y")
+
+# Result
+head(crimeset$rptd_date)
+range(crimeset$rptd_date)
+```
+The range of the dates goes from the first of January of 2020 to the 24th of June of 2024.
+```{r}
+length(unique(crimeset$rptd_date))
+```
+There are only 1637 different dates for 955339 observations. Let's see which ones repeat the most.
+```{r}
+# Ten most repeated dates
+head(sort(table(crimeset$rptd_date), decreasing = T), 10)
+```
+Let's check now the frequencies of each year.
+```{r}
+# Frequencies of the years
+table(year(crimeset$rptd_date))/sum(table(year(crimeset$rptd_date)))
+```
+The year with more observations is 2022 with the 24.61 %, followed by 2023 with the 24.56 %. The year with less observations is 2024 which only accounts for the 8.86 % of the observations, although there are observations until the mid of 2024.
+
+#### **3) Variable DATE.OCC:**
+
+```{r}
+head(crimeset$DATE.OCC)
+```
+Let's proceed like in the previous variable, first let's check if all the observations take
+the same hour.
+```{r}
+# Let's store all the hours in a vector
+checkHours2 <- vapply(crimeset$DATE.OCC, getHour, character(1))
+head(checkHours2)
+length(unique(checkHours2))
+```
+Again, there is the same hour for all the rows, so let's save in a new variable only the dates.
+```{r}
+crimeset$date_occ <-  vapply(crimeset$DATE.OCC, getDate, character(1))
+crimeset$date_occ <- as.Date(crimeset$date_occ, format = "%m/%d/%Y")
+head(crimeset$date_occ)
+range(crimeset$date_occ)
+```
+The range of dates is the same of the previous variable.
+```{r}
+head(crimeset$rptd_date)
+head(crimeset$date_occ)
+```
+It seems that the dates of the variable rptd_date can be always older or equeal than the dates of the variable date_occ, let's check it.
+```{r}
+checkPositive <- crimeset$rptd_date - crimeset$date_occ
+head(checkPositive, 10)
+length(which(checkPositive >= 0))
+```
+Confirmed, it's true for all rows.
+
+#### **4) Variable TIME.OCC:**
+
+```{r}
+head(crimeset$TIME.OCC)
+summary(crimeset$TIME.OCC)
+head(sort(table(crimeset$TIME.OCC), decreasing = T), 10)
+```
+It's not clear the meaning and the format of this variable, by its name, it's supposed to contain hours and maybe minutes, but its format is of integer values from 1 to 2359. Values are repeated many times so maybe they can not take any value from 1 to 2359. It could be that 1 means 00:01 and 2359 means 23:59. For checking if this is possible let's test that in all the obervations with four digits the first two never take values bigger than 23, and that the last two digits never take values bigger than 59.
+```{r}
+# Let's check first only the observations of four digits.
+checkFirstTwo <- crimeset$TIME.OCC[which(crimeset$TIME.OCC >= 1000)]%/%100
+checkLastTwo <- crimeset$TIME.OCC[which(crimeset$TIME.OCC >= 1000)]%%100
+range(checkFirstTwo)
+range(checkLastTwo)
+```
+Confirmed, supposed hours only take values from 10 to 23, and minutes from 0 to 59. Let's continue checking the observations with one or two digits.
+```{r}
+# Let's check now the observations with one or two digits.
+checkOneTwo <- crimeset$TIME.OCC[which(crimeset$TIME.OCC < 100)]
+range(checkOneTwo)
+```
+Also ok. Lastly, let's check the observations with three digits.
+```{r}
+# Lastly let's check the observations with three digits.
+checkFirstThree <- crimeset$TIME.OCC[which(crimeset$TIME.OCC < 1000)]%/%100
+checkLastThree <- crimeset$TIME.OCC[which(crimeset$TIME.OCC < 1000)]%%100
+range(checkFirstThree)
+range(checkLastThree)
+```
+Also ok, so it's confirmed, 1 means 00:01 and 2359 means 23:59.
+
+#### **5) Variable AREA:**
+
+```{r}
+sort(unique(crimeset$AREA))
+```
+Areas are codified with a number from 1 to 21, so let's transform them into factor.
+```{r}
+crimeset$AREA <- factor(crimeset$AREA)
+
+# Relative frequencies barplot
+ggplot(as.data.frame(round(table(crimeset$AREA)/length(crimeset$AREA), 2)),
+       aes(x = Var1, y = Freq)) + geom_bar(stat = "identity", color = "indianred3", fill = "indianred3") +
+  labs(title = "Relative frequencies of variable area", x = "area code") + theme_classic() +
+  geom_text(aes(label = Freq), hjust = 1.3) + 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold")) + coord_flip()
+```
+
+#### **6) Variable AREA.NAME:**
+
+```{r}
+head(crimeset$AREA.NAME)
+length(unique(crimeset$AREA.NAME))
+```
+21 unique values, those are the corresponding names of the previous areas. Let's see to which code corrresponds each area name.
+```{r}
+# Auxiliar dataframe to present the area codes and the area names
+auxSet <- data.frame(AREA = numeric(21), AREA_NAME = character(21))
+for (i in 1:21) {
+  auxSet[i, ] <- head(crimeset[which(crimeset$AREA == i), c("AREA", "AREA.NAME")], 1)
+}
+auxSet
+```
+Let's add the area names as the levels of the area variable.
+```{r}
+levels(crimeset$AREA) <- auxSet$AREA_NAME
+head(crimeset$AREA, 7)
+```
+
+#### **7) Variable Rpt.Dist.No:**
