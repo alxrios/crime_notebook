@@ -226,3 +226,196 @@ head(crimeset$AREA, 7)
 ```
 
 #### **7) Variable Rpt.Dist.No:**
+
+```{r}
+head(crimeset$Rpt.Dist.No)
+range(crimeset$Rpt.Dist.No)
+```
+This variable takes integer values from 101 to 2199.
+```{r}
+length(unique(crimeset$Rpt.Dist.No))
+```
+It takes 1209 different values, these are the ten most repeated ones.
+```{r}
+head(sort(table(crimeset$Rpt.Dist.No), decreasing = T), 10)
+```
+It's really difficult to deduct the meaning of this variable.
+
+#### **8) Variable Rpt.Dist.No:**
+
+```{r}
+unique(crimeset$Part.1.2)
+```
+It's a dichotomous variable, so let's transform it into a factor.
+```{r}
+crimeset$Part.1.2 <- factor(crimeset$Part.1.2)
+
+# Relative frequencies barplot
+ggplot(as.data.frame(round(table(crimeset$Part.1.2)/length(crimeset$Part.1.2), 2)),
+       aes(x = Var1, y = Freq)) + geom_bar(stat = "identity", color = "indianred3", fill = "indianred3") +
+  labs(title = "Relative frequencies of variable Part.1.2", x = "Part.1.2") + theme_classic() +
+  geom_text(aes(label = Freq), vjust = -0.3) + 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+```
+
+The category 1 it's observed in 59 % of the observations and the category 2 in the resting 41 %.
+
+#### **9) Variable Crm.Cd:**
+
+
+```{r}
+head(crimeset$Crm.Cd)
+range(crimeset$Crm.Cd)
+typeof(crimeset$Crm.Cd)
+length(unique(crimeset$Crm.Cd))
+```
+Again we have an integer variable of difficult interpretation. It takes values in the range 110 to 956. It takes only 139 different values, so it could be a categorical variable. The most repeated are:
+```{r}
+head(sort(table(crimeset$Crm.Cd), decreasing = T), 10)
+```
+
+#### **10) Variable Crm.Cd.Desc:**
+
+```{r}
+head(crimeset$Crm.Cd.Desc)
+length(unique(crimeset$Crm.Cd.Desc))
+```
+139 unique different values, this variable accounts the meaning of the previous one. Let's print the 20 first crime codes and their names.
+```{r}
+# Let's create a dataframe with the crimes codes and their name.
+crimeNames <- data.frame(code = numeric(139), crime = character(139))
+rowIndex <- 1 # Auxiliar variable for selecting the row
+for (i in sort(unique(crimeset$Crm.Cd))) {
+  crimeNames[rowIndex, ] <- head(crimeset[which(crimeset$Crm.Cd == i), c("Crm.Cd", "Crm.Cd.Desc")], 1)
+  rowIndex <- rowIndex + 1
+}
+
+# Result
+head(crimeNames, 20)
+```
+Now that its confirmed that the previous variable was a categorical one, let's create a new variable with the previous one as a factor and assign it the correct level names.
+```{r}
+crimeset$crm_cd <- factor(crimeset$Crm.Cd)
+head(crimeset$crm_cd)
+levels(crimeset$crm_cd) <- crimeNames$crime
+head(crimeset$crm_cd, 7)
+```
+Let's view now the 20 most frequent types of crimes registered.
+```{r}
+data.frame(crime = names(head(sort(table(crimeset$crm_cd), decreasing = T), 20)), 
+           frequency = as.vector(head(sort(table(crimeset$crm_cd), decreasing = T), 20)), 
+           rel_frequency = round(100*as.vector(head(sort(table(crimeset$crm_cd),
+                                                         decreasing = T), 20))/955339, 2))
+```
+As can be seen the most observed crime is vehicles steal.
+
+#### **11) Variable Mocodes:**
+
+```{r}
+head(crimeset$Mocodes)
+length(unique(crimeset$Mocodes))
+```
+Character variable that accounts for some kind of code or id. Only has 307532 unique values.
+```{r}
+head(sort(table(crimeset$Mocodes), decreasing = T), 7)
+```
+The most repeated value is the empty string "", so this could mean that there are 136675 missing values in the variable, and it would be convenient to modify them into NA.
+
+#### **12) Variable Vict.Age:**
+
+By its name, this variable must contain the victim's age.
+```{r}
+range(crimeset$Vict.Age)
+```
+The range takes negative values, so we must decide if put them as missing or simply has positive. Also the maximum age looks pretty high. Let's check how many ages are negative and how many ages are near 120.
+```{r}
+# How many negative values are in the variable?
+length(which(crimeset$Vict.Age < 0))
+```
+124 are negative values. Let's see their frequencies.
+```{r}
+table(crimeset$Vict.Age[which(crimeset$Vict.Age <= 0)])
+```
+There are 245607 zeros in the variable, over a total of 955339 observations, that would mean that 26 % of the victims in the dataset are infants of less than one year of age, which seems a non-realistic cipher. Let's observe what kind of crimes are this observations associated with.
+```{r}
+data.frame(crime = names(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == 0)]), decreasing = T), 20)), 
+           frequency = as.vector(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == 0)]), decreasing = T), 20)))
+```
+As can be seen in the table above, the crimes reported for age zero are hardly associated with persons of that age. Let's see what is the other than zero minimum age observed and contrast its results with these.
+```{r}
+# Ages registered that are less than 10 years.
+sort(unique(crimeset$Vict.Age[which(crimeset$Vict.Age < 10)]))
+length(which(crimeset$Vict.Age == 2))
+100*length(which(crimeset$Vict.Age == 2))/955339
+```
+The next minimum age is 2 which has 426 observations in this dataset, that's a 0.045 %, which sounds like a more realistic number than the one obtained for age 0.
+```{r}
+data.frame(crime = names(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == 2)]), decreasing = T), 20)), 
+           frequency = as.vector(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == 2)]), decreasing = T), 20)))
+```
+Also now the most observed crimes are ones that sound like directly or at least can indirectly be associated with children, so effectively let's replace all the zero ages with NA's. For the case of the negative values, it could be that simply were put to negative by mistake, and they only need to be modified as positve. To look for more insights that supports this view, let's observe what associated crimes they have.
+```{r}
+data.frame(crime = names(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age < 0)]), decreasing = T), 26)), 
+           frequency = as.vector(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age < 0)]), decreasing = T), 26)))
+```
+Looking at the mentioned frequencies it doesn't seems clear that this observations refer to child related crimes, so also let's replace this observations with NA values.
+```{r}
+# Replace all negative and zero ages with NA's.
+crimeset$Vict.Age <- replace(crimeset$Vict.Age, which(crimeset$Vict.Age <= 0), NA)
+range(crimeset$Vict.Age, na.rm = T)
+```
+New ranges goes from 2 to 120.
+Now let's explore how many values are near its maximum, 120 years.
+```{r}
+table(crimeset$Vict.Age[which(crimeset$Vict.Age > 90)])
+```
+Only one observation takes the value 120 and the nearest one to 120 is 99. Assuming that the data comes from the United States, if we search about the eldest people registered there, can be seen that until this day, nobody has passed from 119 years of age. So definetly, let's assume that this age also must be replaced with a missing value.
+```{r}
+# Replace the value that takes 120 by an NA.
+crimeset$Vict.Age <- replace(crimeset$Vict.Age, which(crimeset$Vict.Age == 120), NA)
+# New range
+range(crimeset$Vict.Age, na.rm = T)
+summary(crimeset$Vict.Age)
+
+# Histogram
+ggplot(crimeset, aes(x = Vict.Age)) + geom_histogram(color = "white", fill = "indianred3", binwidth = 5) +
+  theme_light() + labs(title = "Histogram of variable Vict.Age", x = "victim's age") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+# Boxplot
+ggplot(crimeset, aes(x = Vict.Age)) + geom_boxplot(color = "indianred3") + coord_flip() +
+  labs(title = "Boxplot of variable Vict.Age", x = "value") + 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+```
+
+Now the minimum value is 2, the maximum value is 99 and the median is 37. Missing values now are around the 26 % of the variable.
+
+#### **13) Variable Vict.Sex**
+
+```{r}
+head(crimeset$Vict.Sex)
+```
+This variable accounts for the victim's sex, currently is a character variable, so it needs to be transformed into a factor, but first let's view which values it takes.
+```{r}
+table(crimeset$Vict.Sex)
+```
+We see that 130045 observations take the empty character "", 1 observation take the character "-", 109 the letter "H" and 89366 the letter "X", let's assume that all this observations are missing values, so let's replace them with NA's.
+```{r}
+crimeset$Vict.Sex <- replace(crimeset$Vict.Sex, which(crimeset$Vict.Sex == ""), NA)
+crimeset$Vict.Sex <- replace(crimeset$Vict.Sex, which(crimeset$Vict.Sex == "-"), NA)
+crimeset$Vict.Sex <- replace(crimeset$Vict.Sex, which(crimeset$Vict.Sex == "H"), NA)
+crimeset$Vict.Sex <- replace(crimeset$Vict.Sex, which(crimeset$Vict.Sex == "X"), NA)
+round(100*sum(is.na(crimeset$Vict.Sex))/955339, 2)
+
+# Relative frequencies barplot
+ggplot(as.data.frame(round(table(crimeset$Vict.Sex)/length(crimeset$Vict.Sex), 2)),
+       aes(x = Var1, y = Freq)) + geom_bar(stat = "identity", color = "indianred3", fill = "indianred3") +
+  labs(title = "Relative frequencies of variable victim's sex", x = "victim's sex") + theme_classic() +
+  geom_text(aes(label = Freq), vjust = -0.5) + 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+```
+
+There are 41 % of males and 36 % of females in the observations. Now 22.98 % of the observations are missing values.
+
+#### **14) Variable Premis.Cd**
+
