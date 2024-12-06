@@ -209,3 +209,171 @@ for (i in 1:21) {
 # 7) Variable: Rpt.Dist.No
 
 head(crimeset$Rpt.Dist.No)
+range(crimeset$Rpt.Dist.No)
+length(unique(crimeset$Rpt.Dist.No))
+head(sort(table(crimeset$Rpt.Dist.No), decreasing = T), 10)
+
+# 8) Variable: Part.1.2
+
+head(crimeset$Part.1.2)
+unique(crimeset$Part.1.2)
+table(crimeset$Part.1.2)
+crimeset$Part.1.2 <- factor(crimeset$Part.1.2)
+
+# Relative frequencies barplot
+ggplot(as.data.frame(round(table(crimeset$Part.1.2)/length(crimeset$Part.1.2), 2)),
+       aes(x = Var1, y = Freq)) + geom_bar(stat = "identity", color = "indianred3", fill = "indianred3") +
+  labs(title = "Relative frequencies of variable Part.1.2", x = "Part.1.2") + theme_classic() +
+  geom_text(aes(label = Freq), vjust = -0.3) + 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+# 9) Variable: Crm.Cd
+
+head(crimeset$Crm.Cd)
+range(crimeset$Crm.Cd)
+typeof(crimeset$Crm.Cd)
+head(sort(table(crimeset$Crm.Cd), decreasing = T), 10)
+
+# 10) Variable: Crm.Cd.Desc
+
+head(crimeset$Crm.Cd.Desc)
+length(unique(crimeset$Crm.Cd.Desc))
+
+# Let's create a dataframe with the crimes codes and their name.
+crimeNames <- data.frame(code = numeric(139), crime = character(139))
+rowIndex <- 1 # Auxiliar variable for selecting the row
+for (i in sort(unique(crimeset$Crm.Cd))) {
+  crimeNames[rowIndex, ] <- head(crimeset[which(crimeset$Crm.Cd == i), c("Crm.Cd", "Crm.Cd.Desc")], 1)
+  rowIndex <- rowIndex + 1
+}
+
+# Result
+head(crimeNames, 20)
+
+# Let's create a new variable with the previous one as a factor and assign it the correct 
+# level names.
+crimeset$crm_cd <- factor(crimeset$Crm.Cd)
+head(crimeset$crm_cd)
+levels(crimeset$crm_cd) <- crimeNames$crime
+head(crimeset$crm_cd, 7)
+
+head(sort(table(crimeset$crm_cd), decreasing = T), 20)
+names(head(sort(table(crimeset$crm_cd), decreasing = T), 20))
+data.frame(crime = names(head(sort(table(crimeset$crm_cd), decreasing = T), 20)), 
+           frequency = as.vector(head(sort(table(crimeset$crm_cd), decreasing = T), 20)), 
+           rel_frequency = round(100*as.vector(head(sort(table(crimeset$crm_cd),
+                                                         decreasing = T), 20))/955339, 2))
+
+# 30 rows version
+
+data.frame(crime = names(head(sort(table(crimeset$crm_cd), decreasing = T), 30)), 
+           frequency = as.vector(head(sort(table(crimeset$crm_cd), decreasing = T), 30)), 
+           rel_frequency = round(100*as.vector(head(sort(table(crimeset$crm_cd),
+                                                         decreasing = T), 30))/955339, 2))
+
+
+# 11) Variable: Mocodes
+
+head(crimeset$Mocodes)
+length(unique(crimeset$Mocodes))
+head(sort(table(crimeset$Mocodes), decreasing = T), 7)
+
+# 12) Variable: Vict.Age
+
+head(crimeset$Vict.Age)
+range(crimeset$Vict.Age)
+# How many negative values are in the variable?
+length(which(crimeset$Vict.Age < 0))
+table(crimeset$Vict.Age[which(crimeset$Vict.Age <= 0)])
+# Let's see which type of crimes are asociated with the victim's age zero.
+head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == 0)]), decreasing = T), 20)
+# Let's present the above head content in a data.frame
+data.frame(crime = names(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == 0)]), decreasing = T), 20)), 
+           frequency = as.vector(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == 0)]), decreasing = T), 20)))
+
+
+sort(unique(crimeset$Vict.Age[which(crimeset$Vict.Age < 10)]))
+head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == 2)]), decreasing = T), 20)
+
+length(which(crimeset$Vict.Age == 2))
+100*length(which(crimeset$Vict.Age == 2))/955339
+data.frame(crime = names(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == 2)]), decreasing = T), 20)), 
+           frequency = as.vector(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == 2)]), decreasing = T), 20)))
+
+# Which crimes are associated with the negative ages?
+
+data.frame(crime = names(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == -1)]), decreasing = T), 20)), 
+           frequency = as.vector(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == -1)]), decreasing = T), 20)))
+
+data.frame(crime = names(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == -2)]), decreasing = T), 20)), 
+           frequency = as.vector(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == -2)]), decreasing = T), 20)))
+
+data.frame(crime = names(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == -3)]), decreasing = T), 20)), 
+           frequency = as.vector(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == -3)]), decreasing = T), 20)))
+
+data.frame(crime = names(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == -4)]), decreasing = T), 20)), 
+           frequency = as.vector(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == -4)]), decreasing = T), 20)))
+
+data.frame(crime = names(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age < 0)]), decreasing = T), 26)), 
+           frequency = as.vector(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age < 0)]), decreasing = T), 26)))
+
+# Replace all negative and zero ages with NA's.
+crimeset$Vict.Age <- replace(crimeset$Vict.Age, which(crimeset$Vict.Age <= 0), NA)
+range(crimeset$Vict.Age, na.rm = T)
+sum(is.na(crimeset$Vict.Age))
+
+# Which ages are near 120.
+crimeset$Vict.Age[which(crimeset$Vict.Age > 100)]
+table(crimeset$Vict.Age[which(crimeset$Vict.Age > 100)])
+table(crimeset$Vict.Age[which(crimeset$Vict.Age > 90)])
+
+summary(crimeset$Vict.Age)
+# Upper whisker
+50 + 1.5*(50 - 28)
+# 120 is way above the upper whisker
+
+# Boxplot
+ggplot(crimeset, aes(x = Vict.Age)) + geom_boxplot(color = "indianred3") + coord_flip() +
+  labs(title = "Boxplot of variable Vict.Age", x = "value") + 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+# Which crime is associated with the victim's age 120?
+crimeset$crm_cd[which(crimeset$Vict.Age == 120)]
+
+# Which crimes are associated with the other outliers?
+
+sort(table(crimeset$crm_cd[which(crimeset$Vict.Age > 83)]), decreasing = T)
+
+# Replace the value that takes 120 by an NA.
+crimeset$Vict.Age <- replace(crimeset$Vict.Age, which(crimeset$Vict.Age == 120), NA)
+range(crimeset$Vict.Age, na.rm = T)
+
+summary(crimeset$Vict.Age)
+# Histogram
+ggplot(crimeset, aes(x = Vict.Age)) + geom_histogram(color = "white", fill = "indianred3", binwidth = 5) +
+  theme_light() + labs(title = "Histogram of variable Vict.Age", x = "victim's age") +
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+
+# 13) Variable: Vict.Sex
+
+head(crimeset$Vict.Sex)
+table(crimeset$Vict.Sex)
+sum(is.na(crimeset$Vict.Sex))
+
+crimeset$Vict.Sex <- replace(crimeset$Vict.Sex, which(crimeset$Vict.Sex == ""), NA)
+crimeset$Vict.Sex <- replace(crimeset$Vict.Sex, which(crimeset$Vict.Sex == "-"), NA)
+crimeset$Vict.Sex <- replace(crimeset$Vict.Sex, which(crimeset$Vict.Sex == "H"), NA)
+crimeset$Vict.Sex <- replace(crimeset$Vict.Sex, which(crimeset$Vict.Sex == "X"), NA)
+crimeset$Vict.Sex <- factor(crimeset$Vict.Sex)
+table(crimeset$Vict.Sex)
+round(100*sum(is.na(crimeset$Vict.Sex))/955339, 2)
+
+# Relative frequencies barplot
+ggplot(as.data.frame(round(table(crimeset$Vict.Sex)/length(crimeset$Vict.Sex), 2)),
+       aes(x = Var1, y = Freq)) + geom_bar(stat = "identity", color = "indianred3", fill = "indianred3") +
+  labs(title = "Relative frequencies of variable victim's sex", x = "victim's sex") + theme_classic() +
+  geom_text(aes(label = Freq), vjust = -0.5) + 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+# 14) Variable: Premis.Cd
