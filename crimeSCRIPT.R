@@ -377,3 +377,515 @@ ggplot(as.data.frame(round(table(crimeset$Vict.Sex)/length(crimeset$Vict.Sex), 2
   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
 
 # 14) Variable: Premis.Cd
+
+head(crimeset$Premis.Cd)
+range(crimeset$Premis.Cd)
+sum(is.na(crimeset$Premis.Cd))
+range(crimeset$Premis.Cd, na.rm = T)
+length(unique(crimeset$Premis.Cd))
+
+# 15) Variable: Premis.Desc
+
+head(crimeset$Premis.Desc)
+length(unique(crimeset$Premis.Desc))
+sum(is.na(crimeset$Premis.Desc))
+length(unique(crimeset$Premis.Desc)[-125])
+# Let's create a dataframe with the different descriptions and their associated codes.
+#
+# Dataframe initialization
+premisFrame <- data.frame(code = numeric(306), description = character(306))
+rowIndex <- 1
+for (i in unique(crimeset$Premis.Desc)[-125]) {
+  premisFrame[rowIndex, ] <- head(crimeset[which(crimeset$Premis.Desc == i), c("Premis.Cd", "Premis.Desc")], 1)
+  rowIndex <- rowIndex  + 1
+}
+
+# Sample result
+head(premisFrame, 20)
+# Most observerd ones
+head(sort(table(crimeset$Premis.Desc), decreasing = T), 10)
+
+# There are empty categories? ("")
+
+length(which(crimeset$Premis.Desc == ""))
+length(which(crimeset$Premis.Desc == " "))
+length(which(premisFrame$description == ""))
+
+length(unique(premisFrame$description))
+length(unique(premisFrame$code))
+
+# How many different codes take the description ""?
+length(unique(crimeset$Premis.Cd[which(crimeset$Premis.Desc == "")]))
+# Let's see what codes are:
+unique(crimeset$Premis.Cd[which(crimeset$Premis.Desc == "")])
+table(crimeset$Premis.Cd[which(crimeset$Premis.Desc == "")])
+sum(table(crimeset$Premis.Cd[which(crimeset$Premis.Desc == "")]))
+569 - 557
+# Are this codes always associated with empty descriptions?
+table(crimeset$Premis.Desc[which(crimeset$Premis.Cd == 256)])
+# Continue checking the others...
+table(crimeset$Premis.Desc[which(crimeset$Premis.Cd == 418)])
+table(crimeset$Premis.Desc[which(crimeset$Premis.Cd == 972)])
+table(crimeset$Premis.Desc[which(crimeset$Premis.Cd == 973)])
+table(crimeset$Premis.Desc[which(crimeset$Premis.Cd == 974)])
+table(crimeset$Premis.Desc[which(crimeset$Premis.Cd == 975)])
+table(crimeset$Premis.Desc[which(crimeset$Premis.Cd == 976)])
+
+for (i in unique(crimeset$Premis.Cd[which(crimeset$Premis.Desc == "")])[-4]) {
+  cat("code:", i, "\n")
+  print(table(crimeset$Premis.Desc[which(crimeset$Premis.Cd == i)]))
+  cat("--------------------------\n")
+}
+
+# Replace all the empty descriptions with NA values.
+crimeset$Premis.Desc <- replace(crimeset$Premis.Desc, which(crimeset$Premis.Desc == ""), NA)
+# Checking...
+sum(is.na(crimeset$Premis.Desc))
+
+# Convert the variable into a factor
+crimeset$Premis.Desc <- factor(crimeset$Premis.Desc)
+
+# 16) Variable: Weapon.Used.Cd
+
+head(crimeset$Weapon.Used.Cd)
+sum(is.na(crimeset$Weapon.Used.Cd))
+100*sum(is.na(crimeset$Weapon.Used.Cd))/dim(crimeset)[1]
+# 66 % of the observation are missing values
+range(crimeset$Weapon.Used.Cd, na.rm = T)
+head(sort(table(crimeset$Weapon.Used.Cd), decreasing = T))
+
+# 17) Variable: Weapon.Desc
+
+head(crimeset$Weapon.Desc)
+sum(is.na(crimeset$Weapon.Desc))
+length(which(crimeset$Weapon.Desc == ""))
+
+# Checking that the rows with NAs of the previous variable and the rows with "" of this one are
+# the same.
+rowsCode <- which(is.na(crimeset$Weapon.Used.Cd))
+rowsDesc <- which(crimeset$Weapon.Desc == "")
+length(rowsCode) == length(rowsDesc)
+# Lengths are the same, ok
+sum(rowsCode == rowsDesc)
+
+# Replacing the empty strings with NAs.
+crimeset$Weapon.Desc <- replace(crimeset$Weapon.Desc, which(crimeset$Weapon.Desc == ""), NA)
+sum(is.na(crimeset$Weapon.Desc))
+length(unique(crimeset$Weapon.Desc))
+
+head(sort(table(crimeset$Weapon.Desc), decreasing = T), 20)
+# Which values for the variable crm.cd.desc take the observations which take the category
+# verbal threat for this variable?
+sort(table(crimeset$Crm.Cd.Desc[which(crimeset$Weapon.Desc == "VERBAL THREAT")]), decreasing = T)
+# Transform the variable into factor
+crimeset$Weapon.Desc <- factor(crimeset$Weapon.Desc)
+
+# Dataframe with the 20 most observed weapons
+data.frame(weapon = names(head(sort(table(crimeset$Weapon.Desc), decreasing = T), 20)), 
+           frequency = as.vector(head(sort(table(crimeset$Weapon.Desc), decreasing = T), 20)))
+
+# Let's explore which are the most observed crimes for the weapon categories strong-arm,
+# verbal threat and vehicle.
+head(sort(table(crimeset$Crm.Cd.Desc[which(crimeset$Weapon.Desc == "VERBAL THREAT")]), decreasing = T), 10)
+
+for (i in c("STRONG-ARM (HANDS, FIST, FEET OR BODILY FORCE)", "VERBAL THREAT", "VEHICLE")) {
+  cat("Weapon:", i, "\n\n")
+  print.data.frame(data.frame(crime = names(head(sort(table(crimeset$Crm.Cd.Desc[which(crimeset$Weapon.Desc == i)]), decreasing = T), 10)), frequency = as.vector(head(sort(table(crimeset$Crm.Cd.Desc[which(crimeset$Weapon.Desc == i)]), decreasing = T), 10))), row.names = F)
+  cat("-----------------------------------------------------------------------\n")
+}
+
+# 18) Variable: Status
+
+head(crimeset$Status)
+length(unique(crimeset$Status))
+table(crimeset$Status)
+sum(is.na(crimeset$Status))
+length(which(crimeset$Status == ""))
+
+# Replace empty string with NA
+crimeset$Status <- replace(crimeset$Status, which(crimeset$Status == ""), NA)
+sum(is.na(crimeset$Status))
+# Transform into factor
+crimeset$Status <- factor(crimeset$Status)
+
+# 19) Variable: Status.Desc
+
+head(crimeset$Status.Desc)
+sum(is.na(crimeset$Status.Desc))
+length(which(crimeset$Status.Desc == ""))
+length(unique(crimeset$Status.Desc))
+# 6 Different values vs. 7 different values for the previous variable
+#
+# Which value for the variable Status.Desc takes the observation that had NA in the previous one?
+crimeset$Status.Desc[which(is.na(crimeset$Status))]
+# Answer: "UNK" which seems to mean unknown
+# Let's see the other values
+unique(crimeset$Status.Desc)
+# Which description takes the observation that accounts for NA in the previous one?
+crimeset$Status.Desc[which(is.na(crimeset$Status))]
+
+# How many observations take the value "UNK"?
+length(which(crimeset$Status.Desc == "UNK"))
+# 6 observations take the value "UNK"
+data.frame(status = crimeset$Status[which(crimeset$Status.Desc == "UNK")], 
+           status_desc = rep("UNK", 6))
+
+# Create a new variable as a factor
+crimeset$status_desc <- replace(crimeset$Status.Desc, which(crimeset$Status.Desc == "UNK"), NA)
+sum(is.na(crimeset$status_desc))
+crimeset$status_desc <- factor(crimeset$status_desc)
+
+# Relative frequencies barplot
+ggplot(as.data.frame(round(table(crimeset$status_desc)/length(crimeset$status_desc), 2)),
+       aes(x = Var1, y = Freq)) + geom_bar(stat = "identity", color = "indianred3", fill = "indianred3") +
+  labs(title = "Relative frequencies of variable status", x = "status") + theme_classic() +
+  geom_text(aes(label = Freq), vjust = -0.3) + 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+
+# Absolute frequencies barplot
+ggplot(as.data.frame(table(crimeset$status_desc)),
+       aes(x = Var1, y = Freq)) + geom_bar(stat = "identity", color = "indianred3", fill = "indianred3") +
+  labs(title = "Relative frequencies of variable status", x = "status") + theme_classic() +
+  geom_text(aes(label = Freq), vjust = -0.3) + 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
+
+# 20) Variables: Crm.Cd.1 - 4
+
+head(crimeset$Crm.Cd.1)
+range(crimeset$Crm.Cd.1)
+range(crimeset$Crm.Cd.1, na.rm = T)
+length(unique(crimeset$Crm.Cd.1))
+head(sort(table(crimeset$Crm.Cd.1), decreasing = T), 20)
+sum(is.na(crimeset$Crm.Cd.1))
+which(is.na(unique(crimeset$Crm.Cd.1)))
+
+# Can codes be the same as the ones of Crm.Cd?
+range(crimeset$Crm.Cd)
+range(crimeset$Crm.Cd.1, na.rm = T)
+# Ranges are equal
+length(unique(crimeset$Crm.Cd))
+length(unique(crimeset$Crm.Cd.1))
+# 139 vs. 142
+# Are more categories in Crm.Cd.Desc than in Crm.Cd?
+length(unique(crimeset$Crm.Cd.Desc))
+# Ans. NO
+
+# Let's use a loop to find which values of Crm.Cd.1 are not in Crm.Cd
+uniquesOne <- sort(unique(crimeset$Crm.Cd))
+uniquesTwo <- sort(unique(crimeset$Crm.Cd.1))
+tail(uniquesOne)
+tail(uniquesTwo)
+notFound <- numeric() # Auxiliar variable to store the not matched unique values
+for (i in uniquesTwo) {
+  if (length(which(uniquesOne == i)) == 0) {
+    notFound <- c(notFound, i)
+  }
+}
+# Result
+print(notFound)
+
+# How many values are equal in the variable Crm.Cd and the variable Crm.Cd.1
+dim(crimeset)[1] - sum(crimeset$Crm.Cd == crimeset$Crm.Cd.1, na.rm = T)
+sort(table(crimeset$Crm.Cd.1[which(crimeset$Crm.Cd != crimeset$Crm.Cd.1)]), decreasing = T)
+
+head(crimeset$Crm.Cd)
+head(crimeset$Crm.Cd.1)
+tail(crimeset$Crm.Cd)
+tail(crimeset$Crm.Cd.1)
+
+# Example, let's look the value of the variable Crm.Cd when Crm.Cd.1 is 812
+table(crimeset$Crm.Cd[which(crimeset$Crm.Cd.1 == 812)])
+# Description for Crm.Cd = 812 and for Crm.Cd = 815
+table(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 815)])
+table(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 812)])
+# Values for Crm.Cd.3 when Crm.
+sort(table(crimeset$Crm.Cd.3[which(crimeset$Crm.Cd == 815 & crimeset$Crm.Cd.1 == 812)]))
+table(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 820)])
+table(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 821)])
+
+
+# Create new columns with the corresponding descriptions of the crimes
+
+# Re-start
+range(crimeset$Crm.Cd)
+range(crimeset$Crm.Cd.1, na.rm = T)
+range(crimeset$Crm.Cd.2, na.rm = T)
+range(crimeset$Crm.Cd.3, na.rm = T)
+range(crimeset$Crm.Cd.4, na.rm = T)
+# Now we have four variables that contains integer values, although not all the ranges are the
+# same nor are included in the range of the variable Crm.Cd, let's think about this variable and
+# the variable Crm.Cd.Desc as a dictionary to relate codes and their descriptions, and let's 
+# take the variables Crm.Cd.1 to Crm.Cd.4 as different crimes charged to one same event.
+# Let's explore some cases as an example:
+
+# How many observations don't take NA as their value for the variable Crm.Cd.4?
+sum(!is.na(crimeset$Crm.Cd.4))
+# How many of this 64 have NAs for the variable Crm.Cd.3?
+sum(is.na(crimeset$Crm.Cd.3[which(!is.na(crimeset$Crm.Cd.4))]))
+# Ok, no NAs, as could be expected (before there are a fourth crime accounted must have been 
+# accounted the three previous ones).
+# Let's continue checking for Crm.Cd.2 and 1
+sum(is.na(crimeset$Crm.Cd.2[which(!is.na(crimeset$Crm.Cd.4))]))
+sum(is.na(crimeset$Crm.Cd.1[which(!is.na(crimeset$Crm.Cd.4))]))
+# Ok, confirmed. Let's check now for three and before
+sum(is.na(crimeset$Crm.Cd.3))
+# 953045 missing values 
+sum(!is.na(crimeset$Crm.Cd.3))
+# 2294 are not missing
+# Missings in Crm.Cd.2 when Crm.Cd.3 is not missing?
+sum(is.na(crimeset$Crm.Cd.2[which(!is.na(crimeset$Crm.Cd.3))]))
+# 0, Ok
+# Missings in Crm.Cd.1 when Crm.Cd.3 is not?
+sum(is.na(crimeset$Crm.Cd.1[which(!is.na(crimeset$Crm.Cd.3))]))
+# 0, Ok
+# Let's repeat the process for Crm.Cd.2
+sum(is.na(crimeset$Crm.Cd.2))
+sum(!is.na(crimeset$Crm.Cd.2))
+# Missings in Crm.Cd.1 when Crm.Cd.2 is not missing?
+sum(is.na(crimeset$Crm.Cd.1[which(!is.na(crimeset$Crm.Cd.2))]))
+# This time is not fulfilled, there are eleven missings, which are all the missings of the 
+# variable Crm.Cd.1.
+# Crm.Cd.2 is missing when Crm.Cd.1 is it?
+sum(is.na(crimeset$Crm.Cd.2[which(is.na(crimeset$Crm.Cd.1))]))
+# No, so there are observations which have missing values for Crm.Cd.1 and not for Crm.Cd.2
+# Let's observe them
+sort(crimeset$Crm.Cd.2[which(is.na(crimeset$Crm.Cd.1))])
+# Values are in the range of Crm.Cd
+
+# Let's inspect some observations with values in the four variables 
+
+indexes <- which(!is.na(crimeset$Crm.Cd.4))
+crimeset$Crm.Cd.4[indexes[3]]
+table(crimeset$Crm.Cd.4[indexes])
+# Let's check when Crm.Cd.4 takes the value 821
+crimeset[which(crimeset$Crm.Cd.4 == 821), c("Crm.Cd.1", "Crm.Cd.2", "Crm.Cd.3", "Crm.Cd.4")]
+# Meaning of the codes.
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 810)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 812)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 820)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 821)])
+# All are related to sexual/rape crimes
+#
+# Let's continue with the observations that take the value 910
+crimeset[which(crimeset$Crm.Cd.4 == 910), c("Crm.Cd.1", "Crm.Cd.2", "Crm.Cd.3", "Crm.Cd.4")]
+# Codes meaning:
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 210)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 230)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 761)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 910)])
+# All categories seems related to a robbery.
+#
+# Let's continue now with 930
+crimeset[which(crimeset$Crm.Cd.4 == 930), c("Crm.Cd.1", "Crm.Cd.2", "Crm.Cd.3", "Crm.Cd.4")]
+# Codes meaning:
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 210)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 761)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 901)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 930)])
+# Again categories related to robbery.
+#
+# Let's continue with 946
+crimeset[which(crimeset$Crm.Cd.4 == 946), c("Crm.Cd.1", "Crm.Cd.2", "Crm.Cd.3", "Crm.Cd.4")]
+# Codes meaning:
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 210)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 510)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 903)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 946)])
+# All categories are related to a robbery.
+
+# Let's explore now the categories for Crm.Cd.3
+length(which(!is.na(crimeset$Crm.Cd.3)))
+sort(table(crimeset$Crm.Cd.3[which(!is.na(crimeset$Crm.Cd.3))]), decreasing = T)
+# Case 910:
+crimeset[which(crimeset$Crm.Cd.3 == 910), c("Crm.Cd.1", "Crm.Cd.2", "Crm.Cd.3")]
+# Row 16291:
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 350)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 626)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 910)])
+# All seems related to kidnapping
+# Row 65682
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 122)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 210)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 910)])
+# All related to rape
+# Row 947554:
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 236)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 761)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 910)])
+# All related to kidnapping
+#
+# Case 434
+crimeset[which(crimeset$Crm.Cd.3 == 434), c("Crm.Cd.1", "Crm.Cd.2", "Crm.Cd.3")]
+# Row 275404:
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 121)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 230)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 434)])
+# All related to rape
+# Case 648
+crimeset[which(crimeset$Crm.Cd.3 == 648), c("Crm.Cd.1", "Crm.Cd.2", "Crm.Cd.3")]
+# Row 274723:
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 110)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 230)])
+unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == 648)])
+# All related to an homicide
+
+# Let's create four new variables with the categories descriptions, those codes not found
+# are going to be put as missing. After this is accomplished, let's transform each one of the
+# four variables into a factor.
+
+auxTransform <- function(code) {
+  # Auxiliary funtion to do the transformation of the codes into their descriptions.
+  # Input: a code and a column of the dataset crimeset from Crm.Cd.1 to Crm.Cd.4
+  # Result: the description matching the code if found and NA otherwise
+  result <- "NA" # Variable for return, NA by default
+  crimeCode <- unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == code)])
+  if (length(crimeCode) > 0) {
+    result <- crimeCode
+  }
+  return(result)
+}
+
+# Testing how to apply the function to a vector:
+test <- vapply(crimeset$Crm.Cd.1, auxTransform, character(1))
+test <- sapply(crimeset$Crm.Cd.1, FUN = auxTransform)
+
+# Let's try to do it in batches of 100k
+test2 <- character(dim(crimeset)[1])
+test2[1:100000] <- sapply(crimeset$Crm.Cd.1[1:100000], auxTransform)
+test2[200001:300000] <- sapply(crimeset$Crm.Cd.1[200001:300000], auxTransform)
+test2[300001:400000] <- sapply(crimeset$Crm.Cd.1[300001:400000], auxTransform)
+test2[400001:500000] <- sapply(crimeset$Crm.Cd.1[400001:500000], auxTransform)
+test2[500001:600000] <- sapply(crimeset$Crm.Cd.1[500001:600000], auxTransform)
+test2[600001:700000] <- sapply(crimeset$Crm.Cd.1[600001:700000], auxTransform)
+test2[700001:800000] <- sapply(crimeset$Crm.Cd.1[700001:800000], auxTransform)
+test2[800001:900000] <- sapply(crimeset$Crm.Cd.1[800001:900000], auxTransform)
+test2[900001:955339] <- sapply(crimeset$Crm.Cd.1[900001:955339], auxTransform)
+# Approximately 7 minutes to execute each batch of 100k
+# If we repeat this 7 times it would be...
+7*7
+# 49 minutes
+# And for four variables...
+49*4
+# 196 minutes to complete the process (more than three hours)
+# Test with vapply:
+test3 <- character(dim(crimeset)[1])
+test3[1:100000] <- vapply(crimeset$Crm.Cd.1[1:100000], auxTransform, character(1))
+# Also about 7 minutes
+# Make a funciton in cpp that do this work
+
+
+# This is very impractical, it takes more than three hours to process create the new
+# four variables. So instead of this, let's try to create four variables with only the 
+# codes that have a corresponding description in the dicitonary, the other ones are going
+# to be replaced by missing values (NAs). Also let's create a function like auxTransform to
+# simplify the search of the description of a given code.
+
+# First step, create four new variables with the same observations.
+# Second step, using a new function replace by NAs all the codes that have no matching with
+# Crm.Cd
+# Third step convert the new variables into factors.
+# Fourth step create a new function that match easily each code with its description.
+# Obtain some results with the factor variables and tranlate them into the descriptions.
+
+# 1st
+crimeset$crime1 <- crimeset$Crm.Cd.1
+crimeset$crime2 <- crimeset$Crm.Cd.2
+crimeset$crime3 <- crimeset$Crm.Cd.3
+crimeset$crime4 <- crimeset$Crm.Cd.4
+# 2nd
+# How many values in Crm.Cd.1 don't match any value in Crm.Cd?
+uniquesZero <- sort(unique(crimeset$Crm.Cd))
+uniquesOne <- sort(unique(crimeset$crime1))
+length(uniquesZero)
+length(uniquesOne)
+# 139 and 141, so two observations don't match (without having into account the NA category).
+dontMatch <- numeric() # Auxiliar variable to store the codes of crime1 that don't match any code
+# in Crm.Cd
+for (i in uniquesOne) {
+  if (length(which(uniquesZero == i)) == 0) {
+    dontMatch <- c(dontMatch, i)
+  }
+}
+
+
+for (i in dontMatch) {
+  crimeset$crime1 <- replace(crimeset$crime1, which(crimeset$crime1 == i), NA)
+}
+
+# How many values in Crm.Cd.2 don't match any value in Crm.Cd?
+uniquesTwo <- sort(unique(crimeset$Crm.Cd.2))
+length(uniquesZero)
+length(uniquesTwo)
+# Less values in Crm.Cd.2 than in Crm.Cd
+dontMatch2 <- numeric()
+for (i in uniquesTwo) {
+  if (length(which(uniquesZero == i)) == 0) {
+    dontMatch2 <- c(dontMatch2, i)
+  }
+}
+
+for (i in dontMatch2) {
+  crimeset$crime2 <- replace(crimeset$crime2, which(crimeset$crime2 == i), NA)
+}
+
+# How many values in Crm.Cd.3 don't match any value in Crm.Cd?
+uniquesThree <- sort(unique(crimeset$Crm.Cd.3))
+length(uniquesZero)
+length(uniquesThree)
+# 139 vs. 37, much less values in Crm.Cd.3
+
+dontMatch3 <- numeric()
+for (i in uniquesThree) {
+  if (length(which(uniquesZero == i)) == 0) {
+    dontMatch3 <- c(dontMatch3, i)
+  }
+}
+
+for (i in dontMatch3) {
+  crimeset$crime3 <- replace(crimeset$crime3, which(crimeset$crime3 == i), NA)
+}
+
+# How many values in Crm.Cd.4 don't match any value in Crm.Cd?
+uniquesFour <- sort(unique(crimeset$Crm.Cd.4))
+length(uniquesZero)
+length(uniquesFour)
+# 139 vs. 6
+
+dontMatch4 <- numeric()
+for (i in uniquesFour) {
+  if (length(which(uniquesZero == i)) == 0) {
+    dontMatch4 <- c(dontMatch4, i)
+  }
+}
+
+for (i in dontMatch4) {
+  crimeset$crime4 <- replace(crimeset$crime4, which(crimeset$crime4 == i), NA)
+}
+
+# Now let's create a loop to do all executing only one block of code
+
+
+crimeset$crime1 <- crimeset$Crm.Cd.1
+crimeset$crime2 <- crimeset$Crm.Cd.2
+crimeset$crime3 <- crimeset$Crm.Cd.3
+crimeset$crime4 <- crimeset$Crm.Cd.4
+
+uniquesZero <- sort(unique(crimeset$Crm.Cd))
+for (i in c("crime1", "crime2", "crime3", "crime4")) {
+  uniquesi <- sort(unique(crimeset[, i]))
+  
+  dontMatch <- numeric() # Auxiliar variable to store the codes of crime1 that don't match any code
+  # in Crm.Cd
+  for (j in uniquesi) {
+    if (length(which(uniquesZero == j)) == 0) {
+      dontMatch <- c(dontMatch, j)
+    }
+  }
+  
+  
+  for (k in dontMatch) {
+    crimeset[, i] <- replace(crimeset[, i], which(crimeset[, i] == k), NA)
+  }
+}
