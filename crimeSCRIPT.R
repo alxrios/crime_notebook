@@ -866,16 +866,17 @@ for (i in dontMatch4) {
 
 # Now let's create a loop to do all executing only one block of code
 
-
+# Create the new variables with the same information
 crimeset$crime1 <- crimeset$Crm.Cd.1
 crimeset$crime2 <- crimeset$Crm.Cd.2
 crimeset$crime3 <- crimeset$Crm.Cd.3
 crimeset$crime4 <- crimeset$Crm.Cd.4
 
-uniquesZero <- sort(unique(crimeset$Crm.Cd))
+# Replace the non-matching codes by NAs
+uniquesZero <- sort(unique(crimeset$Crm.Cd)) # Auxiliar variable with the unique observations of
+                                             # Crm.Cd
 for (i in c("crime1", "crime2", "crime3", "crime4")) {
-  uniquesi <- sort(unique(crimeset[, i]))
-  
+  uniquesi <- sort(unique(crimeset[, i])) # Uniques of column i
   dontMatch <- numeric() # Auxiliar variable to store the codes of crime1 that don't match any code
   # in Crm.Cd
   for (j in uniquesi) {
@@ -884,8 +885,104 @@ for (i in c("crime1", "crime2", "crime3", "crime4")) {
     }
   }
   
-  
+  # Replace the codes that don't match with NAs
   for (k in dontMatch) {
     crimeset[, i] <- replace(crimeset[, i], which(crimeset[, i] == k), NA)
   }
 }
+
+# Transform the four variables into factor
+crimeset$crime1 <- factor(crimeset$crime1)
+crimeset$crime2 <- factor(crimeset$crime2)
+crimeset$crime3 <- factor(crimeset$crime3)
+crimeset$crime4 <- factor(crimeset$crime4)
+
+# Create a function that return the description of a given code
+getDescription <- function(code) {
+  # Receives a positive integer code and if it's one of the values of the 
+  # variable Crm.Cd returns the associated description.
+  # Example:
+  # Input: 510; Return: VEHICLE - STOLEN
+  result <- NA # return variable, by default is NA
+  checkCode <- unique(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == code)])
+  if (length(checkCode) > 0) {
+    result <- checkCode
+  }
+  return(result)
+}
+
+# Create a function that returns the code of a given description
+getCode <- function(description) {
+  # Recieves a character that must match one of the descriptions in Crm.Cd.Desc
+  # Example:
+  # Input: "VEHICLE - STOLEN"; Return: 510
+  result <- NA # variable to be returned, NA by default
+  checkDesc <- unique(crimeset$Crm.Cd[which(crimeset$Crm.Cd.Desc == description)])
+  if (length(checkDesc) > 0) {
+    result <- checkDesc
+  }
+  return(result)
+}
+
+# Let's try it
+table(vapply(crimeset$crime4[which(!is.na(crimeset$crime4))], getDescription, character(1)))
+
+# Let's create a data.frame with all the observations that have crime codes in crime4
+testSet <- crimeset[which(!is.na(crimeset$crime4)),
+                    c("crime1", "crime2", "crime3", "crime4")]
+
+
+# ----------------------------------------------------------------------
+# Question:
+# ----------------------------------------------------------------------
+# All the codes have one and only one description?
+
+for (i in unique(crimeset$Crm.Cd)) {
+  cat("code:", i, "\n")
+  print(table(crimeset$Crm.Cd.Desc[which(crimeset$Crm.Cd == i)]))
+  cat("-------------------------------------\n")
+}
+# Ans: yes
+# ----------------------------------------------------------------------
+
+
+testSetDesc <- data.frame(crime1 = character(5), crime2 = character(5), crime3 = character(5), 
+                          crime4 = character(5))
+
+for (j in 1:dim(testSetDesc)[2]) {
+  testSetDesc[, j] <- vapply(testSet[, j], getDescription, character(1))
+}
+
+testSetDesc
+
+vapply(as.numeric(names((head(sort(table(crimeset$crime1), decreasing = T), 10)))), getDescription, character(1))
+
+# Weapon used when crime1 is "THEFT OF IDENTITY"? Values taken by the other crime variables?
+
+table(crimeset$Weapon.Desc[which(crimeset$crime1 == getCode("THEFT OF IDENTITY"))])
+
+sort(table(crimeset$crime2[which(crimeset$crime1 == getCode("THEFT OF IDENTITY"))]), decreasing = T)
+
+vapply(head(as.numeric(names(sort(table(crimeset$crime2[which(crimeset$crime1 == getCode("THEFT OF IDENTITY"))]), decreasing = T))), 13), getDescription, character(1))
+
+# crime3 takes any values?
+
+sort(table(crimeset$crime3[which(crimeset$crime1 == getCode("THEFT OF IDENTITY"))]), 
+     decreasing = T)
+
+# Descriptions
+
+vapply(as.numeric(head((names(sort(table(crimeset$crime3[which(crimeset$crime1 == getCode("THEFT OF IDENTITY"))]), 
+           decreasing = T))), 2)), getDescription, character(1))
+
+
+# 21) Variable: LOCATION
+
+
+
+
+
+
+
+
+
