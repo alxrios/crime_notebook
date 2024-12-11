@@ -353,14 +353,14 @@ The next minimum age is 2 which has 426 observations in this dataset, that's a 0
 data.frame(crime = names(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == 2)]), decreasing = T), 20)), 
            frequency = as.vector(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age == 2)]), decreasing = T), 20)))
 ```
-Also now the most observed crimes are ones that sound like directly or at least can indirectly be associated with children, so effectively let's replace all the zero ages with NA's. For the case of the negative values, it could be that simply were put to negative by mistake, and they only need to be modified as positve. To look for more insights that supports this view, let's observe what associated crimes they have.
+Also now the most observed crimes are ones that sound like directly or at least can indirectly be associated with children, so effectively let's replace all the zero ages with NAs. For the case of the negative values, it could be that simply were put to negative by mistake, and they only need to be modified as positve. To look for more insights that supports this view, let's observe what associated crimes they have.
 ```{r}
 data.frame(crime = names(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age < 0)]), decreasing = T), 26)), 
            frequency = as.vector(head(sort(table(crimeset$crm_cd[which(crimeset$Vict.Age < 0)]), decreasing = T), 26)))
 ```
 Looking at the mentioned frequencies it doesn't seems clear that this observations refer to child related crimes, so also let's replace this observations with NA values.
 ```{r}
-# Replace all negative and zero ages with NA's.
+# Replace all negative and zero ages with NAs.
 crimeset$Vict.Age <- replace(crimeset$Vict.Age, which(crimeset$Vict.Age <= 0), NA)
 range(crimeset$Vict.Age, na.rm = T)
 ```
@@ -399,7 +399,7 @@ This variable accounts for the victim's sex, currently is a character variable, 
 ```{r}
 table(crimeset$Vict.Sex)
 ```
-We see that 130045 observations take the empty character "", 1 observation take the character "-", 109 the letter "H" and 89366 the letter "X", let's assume that all this observations are missing values, so let's replace them with NA's.
+We see that 130045 observations take the empty character "", 1 observation take the character "-", 109 the letter "H" and 89366 the letter "X", let's assume that all this observations are missing values, so let's replace them with NAs.
 ```{r}
 crimeset$Vict.Sex <- replace(crimeset$Vict.Sex, which(crimeset$Vict.Sex == ""), NA)
 crimeset$Vict.Sex <- replace(crimeset$Vict.Sex, which(crimeset$Vict.Sex == "-"), NA)
@@ -419,3 +419,231 @@ There are 41 % of males and 36 % of females in the observations. Now 22.98 % of 
 
 #### **14) Variable Premis.Cd**
 
+```{r}
+head(crimeset$Premis.Cd)
+sum(is.na(crimeset$Premis.Cd))
+range(crimeset$Premis.Cd, na.rm = T)
+length(unique(crimeset$Premis.Cd))
+```
+Again it seems that we have a codified categorical varaible, this time with 12 missing values and 315 different categories.
+
+#### **15) Variable Premis.Desc**
+
+```{r}
+head(crimeset$Premis.Desc)
+```
+This variable looks like the description of the categories of the previous one.
+```{r}
+length(unique(crimeset$Premis.Desc))
+sum(is.na(crimeset$Premis.Desc))
+```
+It has 307 unique different values vs. the 315 unique different values the previous one had, also this variable has no missing values. So, it seems that can't be a perfect match between codified categories and descriptions. Let's check if there are empty categories in the variable.
+```{r}
+length(which(crimeset$Premis.Desc == ""))
+```
+There are 569 observations which its value is "", so these observations could be replaced with NAs and therefore treated as missing. Let's check what codes are associated with the empty description.
+```{r}
+unique(crimeset$Premis.Cd[which(crimeset$Premis.Desc == "")])
+table(crimeset$Premis.Cd[which(crimeset$Premis.Desc == "")])
+569 - sum(table(crimeset$Premis.Cd[which(crimeset$Premis.Desc == "")]))
+```
+There are 8 different codes that take an empty description, among them are the 12 observations that had a missing code. Let's check if this codes only take the empty description.
+```{r}
+for (i in unique(crimeset$Premis.Cd[which(crimeset$Premis.Desc == "")])[-4]) {
+  cat("code:", i, "\n")
+  print(table(crimeset$Premis.Desc[which(crimeset$Premis.Cd == i)]))
+  cat("--------------------------\n")
+}
+```
+All the eight codes (the ones with NAs included) only take the empty description, so we can replace all this observations with NAs.
+```{r}
+# Replace all the empty descriptions with NA values.
+crimeset$Premis.Desc <- replace(crimeset$Premis.Desc, which(crimeset$Premis.Desc == ""), NA)
+# Checking...
+sum(is.na(crimeset$Premis.Desc))
+```
+Now let's take a look at some of the codes and its descriptions.
+```{r}
+# Let's create a dataframe with the different descriptions and their associated codes.
+#
+# Dataframe initialization
+premisFrame <- data.frame(code = numeric(306), description = character(306))
+rowIndex <- 1
+for (i in unique(crimeset$Premis.Desc)[-125]) {
+  premisFrame[rowIndex, ] <- head(crimeset[which(crimeset$Premis.Desc == i), c("Premis.Cd", "Premis.Desc")], 1)
+  rowIndex <- rowIndex  + 1
+}
+
+# Sample result
+head(premisFrame, 20)
+```
+Now let's convert the variable into a factor.
+```{r}
+# Convert the variable into a factor
+crimeset$Premis.Desc <- factor(crimeset$Premis.Desc)
+
+```
+Let's observe the 10 most frequent scenarios of the registered crimes.
+```{r}
+# Most observerd ones
+head(sort(table(crimeset$Premis.Desc), decreasing = T), 10)
+```
+As can be seen, the four most repeated crime scenarios are the street, homes and parking lots.
+
+#### **16) Variable Weapon.Used.Cd**
+
+Again it seems that we have a numerically codified categorical variable.
+```{r}
+head(crimeset$Weapon.Used.Cd)
+sum(is.na(crimeset$Weapon.Used.Cd))
+100*sum(is.na(crimeset$Weapon.Used.Cd))/dim(crimeset)[1]
+```
+66 % of the observation are missing values.
+```{r}
+range(crimeset$Weapon.Used.Cd, na.rm = T)
+```
+The range of the codes goes from 101 to 516. The codes most repeated are:
+```{r}
+head(sort(table(crimeset$Weapon.Used.Cd), decreasing = T))
+```
+
+#### **17) Variable Weapon.Desc**
+
+```{r}
+head(crimeset$Weapon.Desc)
+sum(is.na(crimeset$Weapon.Desc))
+length(which(crimeset$Weapon.Desc == ""))
+```
+Again seems that the missing values are codified as empty strings, to confirm it, let's check the coincidence between the indexes of the previous variable that took the value NA and the indexes of this variable that take the empty string value.
+```{r}
+# Checking that the rows with NAs of the previous variable and the rows with "" of this one are
+# the same.
+rowsCode <- which(is.na(crimeset$Weapon.Used.Cd))
+rowsDesc <- which(crimeset$Weapon.Desc == "")
+length(rowsCode) == length(rowsDesc)
+# Lengths are the same, ok
+sum(rowsCode == rowsDesc)
+```
+Coincidence between both indexes is confirmed, so let's replace the empty strings with NAs.
+```{r}
+# Replacing the empty strings with NAs.
+crimeset$Weapon.Desc <- replace(crimeset$Weapon.Desc, which(crimeset$Weapon.Desc == ""), NA)
+length(unique(crimeset$Weapon.Desc))
+```
+Now the variable has 80 different values among which are the ones with NAs. Let's transform it into a factor variable.
+```{r}
+crimeset$Weapon.Desc <- factor(crimeset$Weapon.Desc)
+```
+Let's observe now which are the 20 weapons most observed in the dataset.
+```{r}
+data.frame(weapon = names(head(sort(table(crimeset$Weapon.Desc), decreasing = T), 20)), 
+           frequency = as.vector(head(sort(table(crimeset$Weapon.Desc), decreasing = T), 20)))
+```
+As can be seen, the weapon most used was strong-arm. Let's explore now which types of crimes are more observed for the categories strong-arm, verbal threat and vehicle.
+```{r}
+for (i in c("STRONG-ARM (HANDS, FIST, FEET OR BODILY FORCE)", "VERBAL THREAT", "VEHICLE")) {
+  cat("Weapon:", i, "\n\n")
+  print.data.frame(data.frame(crime = names(head(sort(table(crimeset$Crm.Cd.Desc[which(crimeset$Weapon.Desc == i)]), decreasing = T), 10)), frequency = as.vector(head(sort(table(crimeset$Crm.Cd.Desc[which(crimeset$Weapon.Desc == i)]), decreasing = T), 10))), row.names = F)
+  cat("-----------------------------------------------------------------------\n")
+}
+```
+
+#### **18) Variable Status**
+
+```{r}
+table(crimeset$Status)
+```
+This variable takes eight different values among which is the empty string "", so let's replace this observation with a NA. Also let's transform the variable into the more appropriate type factor. Anyway, without more information will be diffictult to advert the meaning of the elements of this variable.
+```{r}
+# Replace empty string with NA
+crimeset$Status <- replace(crimeset$Status, which(crimeset$Status == ""), NA)
+sum(is.na(crimeset$Status))
+# Transform into factor
+crimeset$Status <- factor(crimeset$Status)
+```
+
+#### **19) Variable Status.Desc**
+
+```{r}
+head(crimeset$Status.Desc)
+```
+This varaible seems to contain the descriptions of the previous one, let's see which values it takes.
+```{r}
+unique(crimeset$Status.Desc)
+```
+The different categories seems to mean "Adult Arrested", "Investigation Continues", "Juvenile Arrested", "Adult Other", "Juvenile Other" and "UNKNOWN", so this last one should be the category associated with the NA value of the previous variable, let's check it.
+```{r}
+crimeset$Status.Desc[which(is.na(crimeset$Status))]
+```
+Ok, it's confirmed, so this observation can be replaced by an NA in this variable also.
+Now let's see if more observations take the value "UNK" and if it's affirmative, proceed to look for their corresponding value in the previous variable.
+```{r}
+# How many observations take the value "UNK"?
+length(which(crimeset$Status.Desc == "UNK"))
+# 6 observations take the value "UNK"
+data.frame(status = crimeset$Status[which(crimeset$Status.Desc == "UNK")], 
+           status_desc = rep("UNK", 6))
+```
+So we can see that there is one more value in the variable status that indicates a missing observation, that's the category "CC". This time, instead of transforming directly the variable status.desc, let's create a new one and put it as a factor.
+```{r}
+crimeset$status_desc <- replace(crimeset$Status.Desc, which(crimeset$Status.Desc == "UNK"), NA)
+sum(is.na(crimeset$status_desc))
+crimeset$status_desc <- factor(crimeset$status_desc)
+
+# Absolute frequencies barplot
+ggplot(as.data.frame(table(crimeset$status_desc)),
+       aes(x = Var1, y = Freq)) + geom_bar(stat = "identity", color = "indianred3", fill = "indianred3") +
+  labs(title = "Relative frequencies of variable status", x = "status") + theme_classic() +
+  geom_text(aes(label = Freq), vjust = -0.3) + 
+  theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+```
+
+The category "Investigation Continues" is taked by the 80 % of the observations, both adult categories take around the 10 % of the observations and the both juvenile categories take less than the 1 % of the observations.
+
+#### **20) Variables Crm.Cd.1 - 4**
+
+```{r}
+head(crimeset$Crm.Cd.1)
+range(crimeset$Crm.Cd.1, na.rm = T)
+```
+Again it seems that we have a variable composed of codes that correspond to different categories.
+Let's check if the codes are the same as the ones in the variable Crm.Cd.
+```{r}
+range(crimeset$Crm.Cd)
+range(crimeset$Crm.Cd.1, na.rm = T)
+length(unique(crimeset$Crm.Cd))
+length(unique(crimeset$Crm.Cd.1))
+```
+Ranges are equal but the variable Crm.Cd.1 has two more unique values (without counting the ones that are missing) than the variable Crm.Cd. Let's check what codes are these.
+```{r}
+# Let's use a loop to find which values of Crm.Cd.1 are not in Crm.Cd
+uniquesOne <- sort(unique(crimeset$Crm.Cd))
+uniquesTwo <- sort(unique(crimeset$Crm.Cd.1))
+notFound <- numeric() # Auxiliar variable to store the not matched unique values
+for (i in uniquesTwo) {
+  if (length(which(uniquesOne == i)) == 0) {
+    notFound <- c(notFound, i)
+  }
+}
+# Result
+print(notFound)
+```
+The codes are 430 and 521. Since for this variable are two more codes than in Crm.Cd and we assumed than the variable with the descriptions (Crm.Cd.Desc) referred to the codes in Crm.Cd, we are going to be unable to associate descriptions to these two codes. Let's test now if the descriptions for Crm.Cd and for Crm.Cd.1 can be related, this way the meaning of this variable and the next ones (Crm.Cd.2, Crm.Cd.3, Crm.Cd.4) would be the ones described in Crm.Cd.Desc, and the codes with no match would be put to just missing.
+```{r}
+head(crimeset$Crm.Cd)
+head(crimeset$Crm.Cd.1)
+tail(crimeset$Crm.Cd)
+tail(crimeset$Crm.Cd.1)
+```
+Both variables begin and end with the same codes, but as we have seen before, at some point they must differ. Let's search for observatins which take different values in both variables.
+```{r}
+sort(table(crimeset$Crm.Cd.1[which(crimeset$Crm.Cd != crimeset$Crm.Cd.1)]), decreasing = T)
+```
+So, for example, we can see that the observations that 474 observations that take the value 812 for the variable Crm.Cd.1 don't take the same value for the variable Crm.Cd. Let's see an example:
+```{r}
+# Example, let's look the value of the variable Crm.Cd when Crm.Cd.1 is 812
+table(crimeset$Crm.Cd[which(crimeset$Crm.Cd.1 == 812)])
+```
+So we can see that when the variable Crm.Cd.1 takes the value 812, 1494 observations of the variable take the same value, i.e. the same category, but in other cases they take one of six other values. Let's search for the corresponding descriptions and determine if they can be crimes charged to one unique event.
+```{r}
+```
