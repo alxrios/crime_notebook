@@ -978,11 +978,44 @@ vapply(as.numeric(head((names(sort(table(crimeset$crime3[which(crimeset$crime1 =
 
 # 21) Variable: LOCATION
 
+head(crimeset$LOCATION)
+length(unique(crimeset$LOCATION))
+
+# Most frequent locations
+head(sort(table(crimeset$LOCATION), decreasing = T), 10)
+
+# 22) Variable: Cross.Street
+
+head(crimeset$Cross.Street)
+tail(crimeset$Cross.Street)
+head(crimeset$Cross.Street[which(crimeset$Cross.Street != "")])
+length(unique(crimeset$Cross.Street))
+sum(is.na(crimeset$Cross.Street))
+sum(crimeset$Cross.Street == "")
+
+# 23) Variable: LAT and LON
+
+head(crimeset[, c("LAT", "LON")])
+sum(is.na(crimeset$LAT))
+sum(is.na(crimeset$LON))
+head(sort(table(crimeset$LAT), decreasing = T), 10)
+head(sort(table(crimeset$LON), decreasing = T), 10)
 
 
+mapview(crimeset[1:1000, ], xcol = "LON", ycol = "LAT", crs = 4269, grid = FALSE)
+# There are observations in the middle of the ocean, these are the ones that take
+# the values (0, 0), these could be missing values
+length(which(crimeset$LAT == 0))
+# 2264 observations with 0 latitude
+length(which(crimeset$LON == 0))
+# Also 2264 observations with 0 longitude
+#
+# All the zero latitudes take also a zero longitude?
+table(crimeset$LON[which(crimeset$LAT == 0)])
+# Ans: Yes
+# Let's map now a random sample of points.
+mapview(crimeset[sample(1:dim(crimeset)[1], 95534), ], xcol = "LON", ycol = "LAT", crs = 4269, grid = FALSE)
 
-
-
-
-
+# Let's plot a sample of points between the ones that are not zero
+mapview(crimeset[sample(which(crimeset$LON != 0), round(0.05*dim(crimeset)[1])), ], xcol = "LON", ycol = "LAT", crs = 4269, grid = FALSE)
 
