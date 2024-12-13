@@ -14,6 +14,7 @@ Those are the libraries that are going to be used across this notebook.
 ```{r}
 library(ggplot2)
 library(lubridate)
+library(mapview)
 ```
 
 ### **DATA LOAD**
@@ -481,7 +482,6 @@ Now let's convert the variable into a factor.
 ```{r}
 # Convert the variable into a factor
 crimeset$Premis.Desc <- factor(crimeset$Premis.Desc)
-
 ```
 Let's observe the 10 most frequent scenarios of the registered crimes.
 ```{r}
@@ -709,3 +709,51 @@ vapply(head(as.numeric(names(sort(table(crimeset$crime2[which(crimeset$crime1 ==
 Then the three most observed crimes in the variable crime2 when crime1 is "THEFT OF IDENTITY" are related to document forgery, credit card fraud and plain theft.
 
 #### **21) Variable LOCATION**
+
+```{r}
+head(crimeset$LOCATION)
+length(unique(crimeset$LOCATION))
+```
+This variable contains names of the streets were the crimes were commited. It has 65865 different values.
+The ten most frequent streets are:
+```{r}
+# Most frequent locations
+head(sort(table(crimeset$LOCATION), decreasing = T), 10)
+```
+
+#### **22) Variable Cross.Street**
+
+```{r}
+head(crimeset$Cross.Street)
+head(crimeset$Cross.Street[which(crimeset$Cross.Street != "")])
+length(unique(crimeset$Cross.Street))
+sum(is.na(crimeset$Cross.Street))
+sum(crimeset$Cross.Street == "")
+```
+This variable seems to account streets that in some cases cross with the previous ones. Since not every observation has an street cross as its location, many rows are just the empty string. This time we're not going to replace this strings by NAs because we understand that they're not missing values, just it means that there is no street crossing at the crime scene.
+The variable has 10207 unique values among is not any missing (NA). 806439 observations have an empty string while the resting 148900 observations actually account for a crossing street.
+
+#### **23) Variables LAT and LON**
+
+```{r}
+head(crimeset[, c("LAT", "LON")])
+```
+This variables account for the latitude and the longitude of the crime scene. Let's plot the first one thousand observations to get a glimpse of the observations location.
+```{r}
+mapview(crimeset[1:1000, ], xcol = "LON", ycol = "LAT", crs = 4269, grid = FALSE)
+```
+We can see that, strangely, some observations take place in the Atlantic Ocean near the west coast of central Africa. If we put the cursor over the observations, we can see that this points corresponds to (0, 0), so it seems that there could be some missing values. Let's check it.
+```{r}
+length(which(crimeset$LAT == 0))
+length(which(crimeset$LON == 0))
+```
+We can see that there is the same number of zeros in both variables. Let's check that all zeros are in the same rows for both variables.
+```{r}
+table(crimeset$LON[which(crimeset$LAT == 0)])
+```
+Yes, observations with zero in one variable also take zero in the other, so this points can be replaced by NAs.
+Let's take a sample of the five percent of all the observations without zero latitude and longitude.
+```{r}
+mapview(crimeset[sample(which(crimeset$LON != 0), round(0.05*dim(crimeset)[1])), ], xcol = "LON", ycol = "LAT", crs = 4269, grid = FALSE)
+```
+As can be seen, all the observations are located now in the city of Los Angeles.
